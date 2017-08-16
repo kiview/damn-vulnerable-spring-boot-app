@@ -3,22 +3,47 @@ buildscript {
 		springBootVersion = '1.5.6.RELEASE'
 	}
 	repositories {
-		mavenCentral()
+		maven {
+			url "${artifactory_contextUrl}/plugins-release"
+		}
 	}
 	dependencies {
+		classpath 'se.transmode.gradle:gradle-docker:1.2'
 		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
 	}
 }
 
-apply plugin: 'java'
-apply plugin: 'eclipse'
+apply plugin: 'groovy'
+apply plugin: 'docker'
 apply plugin: 'org.springframework.boot'
 
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = 1.8
+group = 'wss'
 
 repositories {
-	mavenCentral()
+	maven {
+		url "${artifactory_contextUrl}/libs-release"
+	}
+}
+
+
+docker {
+	def registryUrl = System.getenv('CI_REGISTRY') ?: "missing"
+	baseImage = "java:8-jre-alpine"
+	registry = registryUrl
+}
+
+
+task buildDocker(type: Docker, dependsOn: build) {
+	def jarName = "${rootProject.name}.jar"
+	addFile(jar.archivePath, jarName)
+	entryPoint(["java","-jar", "/$jarName"])
+
+	push = true
+
+	tagVersion = System.getenv('CI_COMMIT_TAG') ?: "latest"
+	tag = System.getenv('CI_REGISTRY_IMAGE') ?: "${project.group}/${applicationName}"
 }
 
 
@@ -26,6 +51,7 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter-groovy-templates')
 	compile('org.springframework.boot:spring-boot-starter-jdbc')
 	compile('org.springframework.boot:spring-boot-starter-web')
+	compile('org.codehaus.groovy:groovy-all:2.4.12')
 	runtime('com.h2database:h2')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }
