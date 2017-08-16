@@ -5,6 +5,9 @@ html {
     }
     body {
         div(class: 'container') {
+            form(method: "GET", action: "/books/detail") {
+                input(name: "id", placeholder: "Search for a book id!")
+            }
             br
             table(border:1) {
                 thead {
