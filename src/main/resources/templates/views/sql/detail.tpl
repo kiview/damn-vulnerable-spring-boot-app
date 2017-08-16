@@ -6,7 +6,7 @@ html {
     body {
         div(class: 'container') {
             a(class: 'brand',
-                href: '/sql/',
+                href: '/books/',
                 'List')
             br()
             br()

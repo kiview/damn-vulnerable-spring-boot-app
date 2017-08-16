@@ -18,13 +18,13 @@ html {
                     books.each { book ->
                         tr {
                             td {
-                                a(href: "/sql/detail?id=${book.id}", "${book.id}")
+                                a(href: "/books/detail?id=${book.id}", "${book.id}")
                             }
                             td {
-                                a(href: "/sql/detail?id=${book.id}", "${book.name}")
+                                a(href: "/books/detail?id=${book.id}", "${book.name}")
                             }
                             td {
-                                a(href: "/sql/detail?id=${book.id}", "${book.author}")
+                                a(href: "/books/detail?id=${book.id}", "${book.author}")
                             }
                         }
                     }

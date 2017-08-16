@@ -5,7 +5,7 @@ html {
         link(rel: 'stylesheet', href: '/css/bootstrap.min.css')
     }
     body {
-        form(action: "/comments", method: "POST") {
+        form(action: "/comments/", method: "POST") {
             input(name: "input") {
 
             }

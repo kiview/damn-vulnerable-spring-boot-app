@@ -1,4 +1,4 @@
-package damnvulnerablespringbootapp.comments
+package de.gdaag.corp.rp.damnvulnerablespringbootapp.comments
 
 import org.springframework.boot.Banner
 import org.springframework.stereotype.Controller
@@ -14,20 +14,20 @@ class CommentController {
 
     private List comments = ["Hi super Webseite leider keine Mobile App deswegen nur einen Stern.", "Ich muss darauf hinweisen, dass eine Webseite ohne Impressum zu betreiben !!!strafbar!!! ist!!!", "Hallo, wir sinds! Wolltest du nicht die Fotos von Samstag hochladen? Grüße!"]
 
-    @GetMapping(path = [""])
+    @GetMapping(path = ["/"])
     def listComments() {
         new ModelAndView(
-                "views/comment",
+                "views/comment/comment",
                 [bootVersion  : Banner.package.implementationVersion,
                  comments     : comments,
                  groovyVersion: GroovySystem.version])
     }
 
-    @PostMapping("")
+    @PostMapping("/")
     def postComment(@RequestParam String input) {
         comments = [input] + comments
         new ModelAndView(
-                "views/comment",
+                "views/comment/comment",
                 [bootVersion  : Banner.package.implementationVersion,
                  comments     : comments,
                  groovyVersion: GroovySystem.version])

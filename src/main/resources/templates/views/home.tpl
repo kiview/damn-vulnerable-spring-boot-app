@@ -7,7 +7,7 @@ html {
         h1 {
             yield 'Hello and Welcome to the DVSBA!'
         }
-        p ("Take a look around! We have a ${$a(href:'/TBD', "catalouge")} of our favourite books which you can browse. If you like it, leave a comment in the ${ $a(href: '/comments', "comment section")}!")
+        p ("Take a look around! We have a ${$a(href:'/books/', "catalouge")} of our favourite books which you can browse. If you like it, leave a comment in the ${ $a(href: '/comments/', "comment section")}!")
 
     }
 }

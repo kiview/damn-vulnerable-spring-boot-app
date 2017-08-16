@@ -1,4 +1,4 @@
-package damnvulnerablespringbootapp
+package de.gdaag.corp.rp.damnvulnerablespringbootapp
 
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping

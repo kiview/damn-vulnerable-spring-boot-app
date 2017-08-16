@@ -1,4 +1,4 @@
-package de.gdaag.corp.rp.damnvulnerablespringbootapp
+package de.gdaag.corp.rp.damnvulnerablespringbootapp.sql
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataAccessException
@@ -13,9 +13,9 @@ import javax.annotation.PostConstruct
 import java.sql.ResultSet
 import java.sql.SQLException
 
-@RequestMapping("/sql")
+@RequestMapping("/books")
 @Controller
-class SqlInjectionController {
+class BookController {
 
     @Autowired
     JdbcTemplate jdbcTemplate

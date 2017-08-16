@@ -1,4 +1,4 @@
-package de.gdaag.corp.rp.damnvulnerablespringbootapp
+package de.gdaag.corp.rp.damnvulnerablespringbootapp.sql
 
 class Book {
     Long id
