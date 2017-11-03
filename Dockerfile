@@ -4,7 +4,6 @@ RUN mkdir /workspace
 WORKDIR /workspace
 COPY . .
 
-RUN ls -la
 RUN ./gradlew build
 
 FROM openjdk:8-jre as APP
