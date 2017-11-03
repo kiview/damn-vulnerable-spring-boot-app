@@ -1,11 +1,9 @@
 buildscript {
 	ext {
-		springBootVersion = '1.5.6.RELEASE'
+		springBootVersion = '1.5.8.RELEASE'
 	}
 	repositories {
-		maven {
-			url "${artifactory_contextUrl}/plugins-release"
-		}
+		mavenCentral()
 	}
 	dependencies {
 		classpath 'se.transmode.gradle:gradle-docker:1.2'
@@ -13,8 +11,11 @@ buildscript {
 	}
 }
 
-apply plugin: 'groovy'
-apply plugin: 'docker'
+plugins {
+    id "groovy"
+	id "org.owasp.dependencycheck" version "3.0.1"
+}
+
 apply plugin: 'org.springframework.boot'
 
 version = '0.0.1-SNAPSHOT'
@@ -22,36 +23,26 @@ sourceCompatibility = 1.8
 group = 'wss'
 
 repositories {
-	maven {
-		url "${artifactory_contextUrl}/libs-release"
-	}
+	mavenCentral()
 }
-
-
-docker {
-	def registryUrl = System.getenv('CI_REGISTRY') ?: "missing"
-	baseImage = "java:8-jre-alpine"
-	registry = registryUrl
-}
-
-
-task buildDocker(type: Docker, dependsOn: build) {
-	def jarName = "${rootProject.name}.jar"
-	addFile(jar.archivePath, jarName)
-	entryPoint(["java","-jar", "/$jarName"])
-
-	push = true
-
-	tagVersion = System.getenv('CI_COMMIT_TAG') ?: "latest"
-	tag = System.getenv('CI_REGISTRY_IMAGE') ?: "${project.group}/${applicationName}"
-}
-
 
 dependencies {
 	compile('org.springframework.boot:spring-boot-starter-groovy-templates')
 	compile('org.springframework.boot:spring-boot-starter-jdbc')
 	compile('org.springframework.boot:spring-boot-starter-web')
 	compile('org.codehaus.groovy:groovy-all:2.4.12')
-	runtime('com.h2database:h2')
-	testCompile('org.springframework.boot:spring-boot-starter-test')
+
+    // CVE
+	compile 'commons-collections:commons-collections:3.2'
+
+    runtime('com.h2database:h2')
+
+    // FP
+    runtime 'mysql:mysql-connector-java:8.0.8-dmr'
+
+    testCompile('org.springframework.boot:spring-boot-starter-test')
+}
+
+dependencyCheck {
+    suppressionFile = "falsePositives.xml"
 }
