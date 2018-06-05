@@ -1,8 +1,9 @@
 buildscript {
-	ext {
-		springBootVersion = '1.5.8.RELEASE'
-	}
-	repositories {
+    ext {
+        springBootVersion = '1.5.8.RELEASE'
+        //springBootVersion = '1.5.13.RELEASE'
+    }
+    repositories {
 		mavenCentral()
 	}
 	dependencies {
@@ -15,7 +16,7 @@ buildscript {
 
 plugins {
     id "groovy"
-	id "org.owasp.dependencycheck" version "3.0.1"
+	id "org.owasp.dependencycheck" version "3.1.2"
 }
 
 apply plugin: 'org.springframework.boot'

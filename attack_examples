@@ -1,0 +1,5 @@
+Persistent XSS
+Spring rules!<script type="text/javascript">alert("Hallo DevOps Ruhr!");</script>
+
+SQL Injection
+http://localhost:8080/books/detail?id=1;DROP+TABLE+books
