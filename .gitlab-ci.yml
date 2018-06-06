@@ -14,7 +14,6 @@ variables:
   POSTGRES_PASSWORD: testing-password
   POSTGRES_ENABLED: "true"
   POSTGRES_DB: $CI_ENVIRONMENT_SLUG
-  BUILDPACK_URL: https://github.com/heroku/heroku-buildpack-java#v61
 
 stages:
   - build
