@@ -59,26 +59,6 @@ codequality:
   artifacts:
     paths: [codeclimate.json]
 
-performance:
-  stage: performance
-  image: docker:stable
-  variables:
-    DOCKER_DRIVER: overlay2
-  allow_failure: true
-  services:
-    - docker:stable-dind
-  script:
-    - setup_docker
-    - performance
-  artifacts:
-    paths:
-    - performance.json
-    - sitespeed-results/
-  only:
-    refs:
-      - branches
-    kubernetes: active
-
 sast:
   image: docker:stable
   variables:
