@@ -1,23 +1,3 @@
-# This file is a template, and might need editing before it works on your project.
-# Auto DevOps
-# This CI/CD configuration provides a standard pipeline for
-# * building a Docker image (using a buildpack if necessary),
-# * storing the image in the container registry,
-# * running tests from a buildpack,
-# * running code quality analysis,
-# * creating a review app for each topic branch,
-# * and continuous deployment to production
-#
-# In order to deploy, you must have a Kubernetes cluster configured either
-# via a project integration, or via group/project variables.
-# AUTO_DEVOPS_DOMAIN must also be set as a variable at the group or project
-# level, or manually added below.
-#
-# Continuous deployment to production is enabled by default.
-# If you want to deploy to staging first, or enable incremental rollouts,
-# set STAGING_ENABLED or INCREMENTAL_ROLLOUT_ENABLED environment variables.
-# If you want to use canary deployments, uncomment the canary job.
-#
 # If Auto DevOps fails to detect the proper buildpack, or if you want to
 # specify a custom buildpack, set a project variable `BUILDPACK_URL` to the
 # repository URL of the buildpack.
@@ -29,27 +9,15 @@
 image: alpine:latest
 
 variables:
-  # AUTO_DEVOPS_DOMAIN is the application deployment domain and should be set as a variable at the group or project level.
-  # AUTO_DEVOPS_DOMAIN: domain.example.com
 
   POSTGRES_USER: user
   POSTGRES_PASSWORD: testing-password
   POSTGRES_ENABLED: "true"
   POSTGRES_DB: $CI_ENVIRONMENT_SLUG
 
-  KUBERNETES_VERSION: 1.8.6
-  HELM_VERSION: 2.6.1
-
 stages:
   - build
   - test
-  - review
-  - dast
-  - staging
-  - canary
-  - production
-  - performance
-  - cleanup
 
 build:
   stage: build
@@ -149,231 +117,6 @@ sast:container:
     - sast_container
   artifacts:
     paths: [gl-sast-container-report.json]
-
-dast:
-  stage: dast
-  allow_failure: true
-  image: registry.gitlab.com/gitlab-org/security-products/zaproxy
-  variables:
-    POSTGRES_DB: "false"
-  script:
-    - dast
-  artifacts:
-    paths: [gl-dast-report.json]
-  only:
-    refs:
-      - branches
-    kubernetes: active
-  except:
-    - master
-
-review:
-  stage: review
-  script:
-    - check_kube_domain
-    - install_dependencies
-    - download_chart
-    - ensure_namespace
-    - install_tiller
-    - create_secret
-    - deploy
-    - persist_environment_url
-  environment:
-    name: review/$CI_COMMIT_REF_NAME
-    url: http://$CI_PROJECT_PATH_SLUG-$CI_ENVIRONMENT_SLUG.$AUTO_DEVOPS_DOMAIN
-    on_stop: stop_review
-  artifacts:
-    paths: [environment_url.txt]
-  only:
-    refs:
-      - branches
-    kubernetes: active
-  except:
-    - master
-
-stop_review:
-  stage: cleanup
-  variables:
-    GIT_STRATEGY: none
-  script:
-    - install_dependencies
-    - delete
-  environment:
-    name: review/$CI_COMMIT_REF_NAME
-    action: stop
-  when: manual
-  allow_failure: true
-  only:
-    refs:
-      - branches
-    kubernetes: active
-  except:
-    - master
-
-# Keys that start with a dot (.) will not be processed by GitLab CI.
-# Staging and canary jobs are disabled by default, to enable them
-# remove the dot (.) before the job name.
-# https://docs.gitlab.com/ee/ci/yaml/README.html#hidden-keys
-
-# Staging deploys are disabled by default since
-# continuous deployment to production is enabled by default
-# If you prefer to automatically deploy to staging and
-# only manually promote to production, enable this job by setting
-# STAGING_ENABLED.
-
-staging:
-  stage: staging
-  script:
-    - check_kube_domain
-    - install_dependencies
-    - download_chart
-    - ensure_namespace
-    - install_tiller
-    - create_secret
-    - deploy
-  environment:
-    name: staging
-    url: http://$CI_PROJECT_PATH_SLUG-staging.$AUTO_DEVOPS_DOMAIN
-  only:
-    refs:
-      - master
-    kubernetes: active
-    variables:
-      - $STAGING_ENABLED
-
-# Canaries are disabled by default, but if you want them,
-# and know what the downsides are, enable this job by removing the dot (.).
-
-.canary:
-  stage: canary
-  script:
-    - check_kube_domain
-    - install_dependencies
-    - download_chart
-    - ensure_namespace
-    - install_tiller
-    - create_secret
-    - deploy canary
-  environment:
-    name: production
-    url: http://$CI_PROJECT_PATH_SLUG.$AUTO_DEVOPS_DOMAIN
-  when: manual
-  only:
-    refs:
-      - master
-    kubernetes: active
-
-.production: &production_template
-  stage: production
-  script:
-    - check_kube_domain
-    - install_dependencies
-    - download_chart
-    - ensure_namespace
-    - install_tiller
-    - create_secret
-    - deploy
-    - delete canary
-    - delete rollout
-    - persist_environment_url
-  environment:
-    name: production
-    url: http://$CI_PROJECT_PATH_SLUG.$AUTO_DEVOPS_DOMAIN
-  artifacts:
-    paths: [environment_url.txt]
-
-production:
-  <<: *production_template
-  only:
-    refs:
-      - master
-    kubernetes: active
-  except:
-    variables:
-      - $STAGING_ENABLED
-      - $INCREMENTAL_ROLLOUT_ENABLED
-
-production_manual:
-  <<: *production_template
-  when: manual
-  allow_failure: false
-  only:
-    refs:
-      - master
-    kubernetes: active
-    variables:
-      - $STAGING_ENABLED
-  except:
-    variables:
-      - $INCREMENTAL_ROLLOUT_ENABLED
-
-# This job implements incremental rollout on for every push to `master`.
-
-.rollout: &rollout_template
-  stage: production
-  script:
-    - check_kube_domain
-    - install_dependencies
-    - download_chart
-    - ensure_namespace
-    - install_tiller
-    - create_secret
-    - deploy rollout $ROLLOUT_PERCENTAGE
-    - scale stable $((100-ROLLOUT_PERCENTAGE))
-    - delete canary
-    - persist_environment_url
-  environment:
-    name: production
-    url: http://$CI_PROJECT_PATH_SLUG.$AUTO_DEVOPS_DOMAIN
-  artifacts:
-    paths: [environment_url.txt]
-
-rollout 10%:
-  <<: *rollout_template
-  variables:
-    ROLLOUT_PERCENTAGE: 10
-  when: manual
-  only:
-    refs:
-      - master
-    kubernetes: active
-    variables:
-      - $INCREMENTAL_ROLLOUT_ENABLED
-
-rollout 25%:
-  <<: *rollout_template
-  variables:
-    ROLLOUT_PERCENTAGE: 25
-  when: manual
-  only:
-    refs:
-      - master
-    kubernetes: active
-    variables:
-      - $INCREMENTAL_ROLLOUT_ENABLED
-
-rollout 50%:
-  <<: *rollout_template
-  variables:
-    ROLLOUT_PERCENTAGE: 50
-  when: manual
-  only:
-    refs:
-      - master
-    kubernetes: active
-    variables:
-      - $INCREMENTAL_ROLLOUT_ENABLED
-
-rollout 100%:
-  <<: *production_template
-  when: manual
-  allow_failure: false
-  only:
-    refs:
-      - master
-    kubernetes: active
-    variables:
-      - $INCREMENTAL_ROLLOUT_ENABLED
 
 # ---------------------------------------------------------------------------
 
@@ -484,75 +227,6 @@ rollout 100%:
     fi
   }
 
-  function deploy() {
-    track="${1-stable}"
-    percentage="${2:-100}"
-    name="$CI_ENVIRONMENT_SLUG"
-
-    replicas="1"
-    service_enabled="true"
-    postgres_enabled="$POSTGRES_ENABLED"
-
-    # if track is different than stable,
-    # re-use all attached resources
-    if [[ "$track" != "stable" ]]; then
-      name="$name-$track"
-      service_enabled="false"
-      postgres_enabled="false"
-    fi
-
-    replicas=$(get_replicas "$track" "$percentage")
-
-    if [[ "$CI_PROJECT_VISIBILITY" != "public" ]]; then
-      secret_name='gitlab-registry'
-    else
-      secret_name=''
-    fi
-
-    helm upgrade --install \
-      --wait \
-      --set service.enabled="$service_enabled" \
-      --set releaseOverride="$CI_ENVIRONMENT_SLUG" \
-      --set image.repository="$CI_APPLICATION_REPOSITORY" \
-      --set image.tag="$CI_APPLICATION_TAG" \
-      --set image.pullPolicy=IfNotPresent \
-      --set image.secrets[0].name="$secret_name" \
-      --set application.track="$track" \
-      --set application.database_url="$DATABASE_URL" \
-      --set service.url="$CI_ENVIRONMENT_URL" \
-      --set replicaCount="$replicas" \
-      --set postgresql.enabled="$postgres_enabled" \
-      --set postgresql.nameOverride="postgres" \
-      --set postgresql.postgresUser="$POSTGRES_USER" \
-      --set postgresql.postgresPassword="$POSTGRES_PASSWORD" \
-      --set postgresql.postgresDatabase="$POSTGRES_DB" \
-      --namespace="$KUBE_NAMESPACE" \
-      --version="$CI_PIPELINE_ID-$CI_JOB_ID" \
-      "$name" \
-      chart/
-  }
-
-  function scale() {
-    track="${1-stable}"
-    percentage="${2-100}"
-    name="$CI_ENVIRONMENT_SLUG"
-
-    if [[ "$track" != "stable" ]]; then
-      name="$name-$track"
-    fi
-
-    replicas=$(get_replicas "$track" "$percentage")
-
-    if [[ -n "$(helm ls -q "^$name$")" ]]; then
-      helm upgrade --reuse-values \
-        --wait \
-        --set replicaCount="$replicas" \
-        --namespace="$KUBE_NAMESPACE" \
-        "$name" \
-        chart/
-    fi
-  }
-
   function install_dependencies() {
     apk add -U openssl curl tar gzip bash ca-certificates git
     wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub
@@ -586,32 +260,6 @@ rollout 100%:
     export DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DB_HOST}:5432/${POSTGRES_DB}"
   }
 
-  function download_chart() {
-    if [[ ! -d chart ]]; then
-      auto_chart=${AUTO_DEVOPS_CHART:-gitlab/auto-deploy-app}
-      auto_chart_name=$(basename $auto_chart)
-      auto_chart_name=${auto_chart_name%.tgz}
-    else
-      auto_chart="chart"
-      auto_chart_name="chart"
-    fi
-
-    helm init --client-only
-    helm repo add gitlab https://charts.gitlab.io
-    if [[ ! -d "$auto_chart" ]]; then
-      helm fetch ${auto_chart} --untar
-    fi
-    if [ "$auto_chart_name" != "chart" ]; then
-      mv ${auto_chart_name} chart
-    fi
-
-    helm dependency update chart/
-    helm dependency build chart/
-  }
-
-  function ensure_namespace() {
-    kubectl describe namespace "$KUBE_NAMESPACE" || kubectl create namespace "$KUBE_NAMESPACE"
-  }
 
   function check_kube_domain() {
     if [ -z ${AUTO_DEVOPS_DOMAIN+x} ]; then
@@ -680,48 +328,9 @@ rollout 100%:
       -o yaml --dry-run | kubectl replace -n "$KUBE_NAMESPACE" --force -f -
   }
 
-  function dast() {
-    export CI_ENVIRONMENT_URL=$(cat environment_url.txt)
-
-    mkdir /zap/wrk/
-    /zap/zap-baseline.py -J gl-dast-report.json -t "$CI_ENVIRONMENT_URL" || true
-    cp /zap/wrk/gl-dast-report.json .
-  }
-
-  function performance() {
-    export CI_ENVIRONMENT_URL=$(cat environment_url.txt)
-
-    mkdir gitlab-exporter
-    wget -O gitlab-exporter/index.js https://gitlab.com/gitlab-org/gl-performance/raw/10-5/index.js
-
-    mkdir sitespeed-results
-
-    if [ -f .gitlab-urls.txt ]
-    then
-      sed -i -e 's@^@'"$CI_ENVIRONMENT_URL"'@' .gitlab-urls.txt
-      docker run --shm-size=1g --rm -v "$(pwd)":/sitespeed.io sitespeedio/sitespeed.io:6.3.1 --plugins.add ./gitlab-exporter --outputFolder sitespeed-results .gitlab-urls.txt
-    else
-      docker run --shm-size=1g --rm -v "$(pwd)":/sitespeed.io sitespeedio/sitespeed.io:6.3.1 --plugins.add ./gitlab-exporter --outputFolder sitespeed-results "$CI_ENVIRONMENT_URL"
-    fi
-
-    mv sitespeed-results/data/performance.json performance.json
-  }
 
   function persist_environment_url() {
       echo $CI_ENVIRONMENT_URL > environment_url.txt
-  }
-
-  function delete() {
-    track="${1-stable}"
-    name="$CI_ENVIRONMENT_SLUG"
-
-    if [[ "$track" != "stable" ]]; then
-      name="$name-$track"
-    fi
-
-    if [[ -n "$(helm ls -q "^$name$")" ]]; then
-      helm delete "$name"
-    fi
   }
 
 before_script:
