@@ -278,7 +278,7 @@ sast:container:
     fi
 
     echo "Pushing to GitLab Container Registry..."
-    docker push "$CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG"
+    #docker push "$CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG"
     echo ""
   }
 
