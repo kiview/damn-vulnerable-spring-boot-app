@@ -4,19 +4,19 @@ buildscript {
         springBootVersion = '1.5.13.RELEASE'
     }
     repositories {
-		mavenCentral()
-	}
-	dependencies {
-		classpath 'se.transmode.gradle:gradle-docker:1.2'
-		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'se.transmode.gradle:gradle-docker:1.2'
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
 
 
-	}
+    }
 }
 
 plugins {
     id "groovy"
-	id "org.owasp.dependencycheck" version "3.2.1"
+    id "org.owasp.dependencycheck" version "5.0.0-M2"
 }
 
 apply plugin: 'org.springframework.boot'
@@ -27,17 +27,17 @@ sourceCompatibility = 1.8
 group = 'wss'
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	compile('org.springframework.boot:spring-boot-starter-groovy-templates')
-	compile('org.springframework.boot:spring-boot-starter-jdbc')
-	compile('org.springframework.boot:spring-boot-starter-web')
-	compile('org.codehaus.groovy:groovy-all:2.4.12')
+    compile('org.springframework.boot:spring-boot-starter-groovy-templates')
+    compile('org.springframework.boot:spring-boot-starter-jdbc')
+    compile('org.springframework.boot:spring-boot-starter-web')
+    compile('org.codehaus.groovy:groovy-all:2.4.12')
 
     // CVE
-	compile 'commons-collections:commons-collections:3.2'
+    compile 'commons-collections:commons-collections:3.2'
 
     runtime('com.h2database:h2')
 
