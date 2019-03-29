@@ -1,3 +1,5 @@
+import com.github.spotbugs.SpotBugsTask
+
 buildscript {
     ext {
         //springBootVersion = '1.5.8.RELEASE'
@@ -17,10 +19,21 @@ buildscript {
 plugins {
     id "groovy"
     id "org.owasp.dependencycheck" version "5.0.0-M2"
+    id "com.github.spotbugs" version "1.7.1"
+}
+
+spotbugs {
+    toolVersion = '3.1.12'
+}
+
+tasks.withType(SpotBugsTask) {
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
 }
 
 apply plugin: 'org.springframework.boot'
-apply plugin: "findbugs"
 
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = 1.8
@@ -46,35 +59,9 @@ dependencies {
 
     testCompile('org.springframework.boot:spring-boot-starter-test')
 
-    findbugs 'com.google.code.findbugs:findbugs:3.0.1'
-    findbugs configurations.findbugsPlugins.dependencies
-    findbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.4.4'
+    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.7.1'
 }
 
 dependencyCheck {
     suppressionFile = "falsePositives.xml"
-}
-
-
-task findSecurityBugs(type: FindBugs) {
-    classes = fileTree(project.rootDir.absolutePath).include("**/*.class");
-    source = fileTree(project.rootDir.absolutePath).include("**/*.java");
-    classpath = files()
-    pluginClasspath = project.configurations.findbugsPlugins
-
-    findbugs {
-        toolVersion = "3.0.1"
-        sourceSets = [sourceSets.main] // [sourceSets.main] for Java project
-        ignoreFailures = true
-        reportsDir = file("$project.buildDir/findbugsReports")
-        effort = "max"
-        reportLevel = "low"
-        includeFilter = file("$rootProject.projectDir/fsb-include.xml")
-        excludeFilter = file("$rootProject.projectDir/fsb-exclude.xml")
-    }
-
-    reports {
-        xml.enabled = false
-        html.enabled = true
-    }
 }
