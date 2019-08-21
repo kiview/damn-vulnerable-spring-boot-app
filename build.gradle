@@ -3,8 +3,8 @@ import com.github.spotbugs.SpotBugsTask
 buildscript {
     ext {
         //springBootVersion = '1.5.8.RELEASE'
-//        springBootVersion = '1.5.13.RELEASE'
-        springBootVersion = '1.5.19.RELEASE'
+        springBootVersion = '1.5.13.RELEASE'
+//        springBootVersion = '1.5.19.RELEASE'
     }
     repositories {
         mavenCentral()
@@ -19,8 +19,8 @@ buildscript {
 
 plugins {
     id "groovy"
-    id "org.owasp.dependencycheck" version "5.0.0-M2"
-    id "com.github.spotbugs" version "1.7.1"
+    id "org.owasp.dependencycheck" version "5.2.1"
+    id "com.github.spotbugs" version "2.0.0"
 }
 
 spotbugs {
@@ -61,7 +61,7 @@ dependencies {
 
     testCompile('org.springframework.boot:spring-boot-starter-test')
 
-    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.7.1'
+    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.9.0'
 }
 
 dependencyCheck {
